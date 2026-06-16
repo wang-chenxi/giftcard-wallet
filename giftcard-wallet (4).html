@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Gift Card Wallet</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;padding:2rem 1rem}
+.container{max-width:800px;margin:0 auto}
+.app-header{margin-bottom:1.5rem}
+.app-header h1{font-size:22px;font-weight:500;margin-bottom:3px}
+.app-header p{font-size:13px;color:#888}
+
+/* ── Setup banner ── */
+.setup-banner{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem}
+.setup-banner h3{font-size:14px;font-weight:500;margin-bottom:8px}
+.setup-banner p{font-size:13px;color:#555;margin-bottom:10px;line-height:1.6}
+.setup-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.setup-row input{flex:1;min-width:200px;height:34px;font-size:13px;padding:0 10px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;outline:none;font-family:monospace}
+.setup-row input:focus{border-color:rgba(0,0,0,0.4)}
+button.save-key{background:#1a1a1a;color:#fff;border:none;border-radius:8px;padding:0 14px;height:34px;font-size:13px;cursor:pointer}
+button.save-key:hover{opacity:0.87}
+.key-status{font-size:12px;padding:4px 10px;border-radius:6px}
+.key-ok{background:#EAF3DE;color:#27500A}
+.key-missing{background:#FAEEDA;color:#633806}
+
+/* ── Drive bar ── */
+.drive-bar{display:flex;gap:8px;align-items:center;background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:10px;padding:10px 14px;margin-bottom:1rem;flex-wrap:wrap}
+.drive-status{font-size:13px;color:#555;flex:1;min-width:120px}
+.drive-status strong{color:#1a1a1a}
+button.drive-btn{display:flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;font-size:12px;cursor:pointer;color:#444;white-space:nowrap}
+button.drive-btn:hover{background:#f0efe9}
+button.drive-btn.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+button.drive-btn.primary:hover{opacity:0.87}
+button.drive-btn.green{background:#EAF3DE;color:#27500A;border-color:#b8d98e}
+button.drive-btn.green:hover{background:#d4edb8}
+button.drive-btn:disabled{opacity:0.4;cursor:default}
+.drive-file{font-size:11px;color:#888;margin-top:2px}
+
+/* ── Tabs ── */
+.brand-tabs{display:flex;margin-bottom:1.5rem;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;overflow:hidden;background:#fff}
+.brand-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:13px 8px;cursor:pointer;border-right:0.5px solid rgba(0,0,0,0.08);background:#fff;transition:background 0.1s}
+.brand-tab:last-child{border-right:none}
+.brand-tab:hover{background:#f9f8f5}
+.brand-tab.active{background:#1a1a1a}
+.tab-logo{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.tab-name{font-size:12px;font-weight:500;color:#555}
+.brand-tab.active .tab-name{color:#fff}
+.tab-count{font-size:11px;color:#bbb}
+.brand-tab.active .tab-count{color:rgba(255,255,255,0.45)}
+.tab-bal{font-size:11px;font-weight:500;color:#888}
+.brand-tab.active .tab-bal{color:rgba(255,255,255,0.75)}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.stat{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:10px;padding:12px 14px}
+.stat .lbl{font-size:12px;color:#888;margin-bottom:4px}
+.stat .val{font-size:20px;font-weight:500}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center}
+button.add-btn{color:#fff;border:none;border-radius:8px;padding:0 16px;height:36px;font-size:13px;cursor:pointer;font-weight:500}
+button.add-btn:hover{opacity:0.87}
+button.tool-btn{background:#fff;color:#555;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;padding:0 14px;height:36px;font-size:13px;cursor:pointer}
+button.tool-btn:hover{background:#eeecea}
+.unsaved{font-size:12px;color:#854F0B;background:#FAEEDA;border-radius:6px;padding:0 10px;display:none;align-items:center;gap:5px;height:36px;white-space:nowrap}
+
+/* ── Form ── */
+.form-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;display:none}
+.form-title{font-size:14px;font-weight:500;margin-bottom:14px}
+.frow{display:grid;gap:10px;margin-bottom:10px}
+.frow.c2{grid-template-columns:1fr 1fr}
+.frow.c3{grid-template-columns:1fr 1fr 1fr}
+.field label{font-size:12px;color:#666;display:block;margin-bottom:4px}
+.field input,.field select{width:100%;height:34px;font-size:13px;padding:0 10px;background:#fff;color:#1a1a1a;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;outline:none}
+.field input:focus,.field select:focus{border-color:rgba(0,0,0,0.4);box-shadow:0 0 0 2px rgba(0,0,0,0.06)}
+.err-msg{font-size:12px;color:#a32d2d;background:#FCEBEB;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:none}
+.btn-row{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+button.pri{color:#fff;border:none;border-radius:8px;padding:0 16px;height:34px;font-size:13px;cursor:pointer}
+button.pri:hover{opacity:0.87}
+button.sec{background:transparent;color:#666;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;padding:0 14px;height:34px;font-size:13px;cursor:pointer}
+button.sec:hover{background:#f5f4f0}
+
+/* ── Cards ── */
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.list-header span{font-size:13px;font-weight:500;color:#888}
+.check-link{font-size:12px;color:#0C447C;text-decoration:none;padding:5px 12px;border:0.5px solid #B5D4F4;border-radius:8px;background:#E6F1FB;white-space:nowrap}
+.check-link:hover{background:#c5ddf5}
+.card-list{display:flex;flex-direction:column;gap:10px}
+.gc{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;overflow:hidden}
+.gc-top{display:flex;align-items:flex-start;gap:12px;padding:14px}
+.brand-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.gc-main{flex:1;min-width:0}
+.gc-name{font-size:14px;font-weight:500}
+.gc-sub{font-size:12px;color:#888;margin-top:2px}
+.gc-badges{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.badge{font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge-store{background:#F1EFE8;color:#444441}
+.badge-online{background:#E6F1FB;color:#0C447C}
+.badge-gift{background:#EEEDFE;color:#3C3489}
+.badge-email{background:#EAF3DE;color:#27500A}
+.badge-date{background:#FAEEDA;color:#633806}
+.badge-cert{background:#FCEBEB;color:#791F1F}
+.gc-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0}
+.bal{font-size:17px;font-weight:500}
+.bal.unknown{font-size:13px;color:#bbb}
+.update-bal{width:94px;height:28px;font-size:12px;padding:0 8px;background:#f5f4f0;color:#1a1a1a;border:0.5px solid rgba(0,0,0,0.14);border-radius:7px;outline:none;text-align:right}
+.update-bal:focus{border-color:rgba(0,0,0,0.3);background:#fff}
+.gc-actions{display:flex;gap:5px}
+.ic-btn{width:28px;height:28px;border-radius:7px;border:0.5px solid rgba(0,0,0,0.12);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#666;font-size:13px;line-height:1}
+.ic-btn:hover{background:#f0efe9}
+.ic-btn.edit:hover{background:#E6F1FB;color:#0C447C;border-color:#B5D4F4}
+.ic-btn.del:hover{background:#FCEBEB;color:#791F1F;border-color:#F09595}
+.gc-fields{border-top:0.5px solid rgba(0,0,0,0.07);padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.field-row{display:flex;align-items:center;gap:8px;padding:5px 8px;background:#f9f8f5;border-radius:7px}
+.field-lbl{font-size:11px;color:#888;flex-shrink:0;min-width:58px}
+.field-val{font-size:12px;color:#1a1a1a;font-family:'SF Mono',Menlo,Consolas,monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.copy-btn{background:transparent;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;font-size:11px;color:#888;flex-shrink:0}
+.copy-btn:hover{background:rgba(0,0,0,0.07)}
+.copy-btn.copied{color:#27500A;font-weight:500}
+.gc-notes{padding:0 14px 12px;font-size:12px;color:#888;font-style:italic}
+.empty{text-align:center;padding:3rem 2rem;color:#bbb;font-size:13px;border:0.5px dashed rgba(0,0,0,0.12);border-radius:12px}
+.sort-hint{font-size:11px;color:#bbb;margin-left:8px;font-weight:400}
+input[type=file]{display:none}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.15);border-top-color:#1a1a1a;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:580px){
+  .stats{grid-template-columns:1fr 1fr}
+  .frow.c3{grid-template-columns:1fr 1fr}
+  .gc-fields{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app-header">
+    <h1>Gift card wallet</h1>
+    <p>Nordstrom · Target · Alaska Airlines — backed by Google Drive.</p>
+  </div>
+
+  <!-- API Key Setup -->
+  <div class="setup-banner" id="setupBanner">
+    <h3>One-time setup: Google API Client ID</h3>
+    <p>To use Google Drive sync, paste your Google OAuth Client ID below. This is stored only in your browser and never sent anywhere.<br>
+    <strong>How to get one:</strong> Go to <a href="https://console.cloud.google.com/" target="_blank">console.cloud.google.com</a> → Create project → APIs &amp; Services → Credentials → Create OAuth 2.0 Client ID (Web application) → add <code>null</code> as an authorized origin (for local files). Copy the Client ID.</p>
+    <div class="setup-row">
+      <input type="text" id="clientIdInput" placeholder="Paste your Google OAuth Client ID here (ends in .apps.googleusercontent.com)"/>
+      <button class="save-key" onclick="saveClientId()">Save</button>
+      <span class="key-status key-missing" id="keyStatus">Not set</span>
+    </div>
+  </div>
+
+  <!-- Drive Bar -->
+  <div class="drive-bar" id="driveBar">
+    <div>
+      <div class="drive-status" id="driveStatus">Not signed in to Google Drive</div>
+      <div class="drive-file" id="driveFile"></div>
+    </div>
+    <button class="drive-btn primary" id="btnSignIn" onclick="signIn()">Sign in with Google</button>
+    <button class="drive-btn" id="btnSignOut" onclick="signOut()" style="display:none">Sign out</button>
+    <button class="drive-btn green" id="btnLoad" onclick="loadFromDrive()" style="display:none" disabled>⬇ Load from Drive</button>
+    <button class="drive-btn green" id="btnSaveDrive" onclick="saveToDrive()" style="display:none" disabled>⬆ Save to Drive</button>
+  </div>
+
+  <div class="brand-tabs" id="brandTabs"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="lbl">Cards (this brand)</div><div class="val" id="sTotal">0</div></div>
+    <div class="stat"><div class="lbl">Known balance</div><div class="val" id="sBal">$0.00</div></div>
+    <div class="stat"><div class="lbl">From store</div><div class="val" id="sStore">0</div></div>
+    <div class="stat"><div class="lbl">Source breakdown</div><div class="val" id="sOnline" style="font-size:13px;line-height:1.5;padding-top:2px"></div></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="add-btn" id="addBtn" onclick="openForm()">+ Add card</button>
+    <button class="tool-btn" onclick="exportJSON()" title="Download a local backup">&#8675; Backup JSON</button>
+    <button class="tool-btn" onclick="document.getElementById('importFile').click()" title="Load from local file">&#8673; Load local</button>
+    <input type="file" id="importFile" accept=".json" onchange="importJSON(event)"/>
+    <div class="unsaved" id="unsavedBadge">&#9679; Unsaved changes</div>
+  </div>
+
+  <div class="form-card" id="addForm">
+    <div class="form-title" id="formTitle">Add card</div>
+    <div class="frow" id="formRow1" style="grid-template-columns:1fr 1fr">
+      <div class="field"><label>Card number *</label><input id="f-num" placeholder="Full number"/></div>
+      <div class="field" id="f-type-wrap" style="display:none">
+        <label>Type</label>
+        <select id="f-type">
+          <option value="gift card">Gift card</option>
+          <option value="gift certificate">Gift certificate</option>
+        </select>
+      </div>
+      <div class="field"><label id="f-pin-label">PIN / Access code</label><input id="f-pin" placeholder="PIN or access code"/></div>
+    </div>
+    <div class="frow c3">
+      <div class="field"><label>Currency</label>
+        <select id="f-cur"><option>USD</option><option>CAD</option><option>EUR</option><option>GBP</option><option>AUD</option></select>
+      </div>
+      <div class="field"><label>Known balance</label><input type="number" id="f-bal" placeholder="0.00" step="0.01" min="0"/></div>
+      <div class="field"><label>Purchase date</label><input type="date" id="f-date"/></div>
+    </div>
+    <div class="frow c3">
+      <div class="field"><label>Purchase source</label>
+        <select id="f-src">
+          <option value="">— Select —</option>
+          <option value="physical">Physical store</option>
+          <option value="online">Online (brand site)</option>
+          <option value="gift">Received as gift</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Email associated</label><input id="f-email" placeholder="you@email.com"/></div>
+      <div class="field"><label>Expiry (optional)</label><input id="f-exp" placeholder="MM/YYYY"/></div>
+    </div>
+    <div class="frow c2">
+      <div class="field"><label>Notes</label><input id="f-notes" placeholder="Any notes…"/></div>
+    </div>
+    <div class="err-msg" id="errMsg"></div>
+    <div class="btn-row">
+      <button class="sec" onclick="closeForm()">Cancel</button>
+      <button class="pri" id="formSaveBtn" onclick="saveCard()">Add card</button>
+    </div>
+  </div>
+
+  <div class="list-header">
+    <span id="cardCount">0 cards<span class="sort-hint">sorted by balance, then newest first</span></span>
+    <a class="check-link" id="checkLink" href="#" target="_blank">Check balance ↗</a>
+  </div>
+  <div class="card-list" id="cardList"></div>
+</div>
+
+<!-- Google API -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+// ─── Config ───────────────────────────────────────────────
+const DRIVE_FILENAME = 'giftcards.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+
+const BRANDS=[
+  {id:'nordstrom',name:'Nordstrom',short:'Nordstrom',bg:'#FAEEDA',color:'#633806',activeBg:'#1a1a1a',letter:'N',checkUrl:'https://www.nordstrom.com/nordstrom-gift-cards',hasType:false,pinLabel:'PIN / Access code'},
+  {id:'target',name:'Target',short:'Target',bg:'#FCEBEB',color:'#791F1F',activeBg:'#CC0000',letter:'T',checkUrl:'https://www.target.com/gift-cards',hasType:false,pinLabel:'PIN (15-digit on back)'},
+  {id:'alaska',name:'Alaska Airlines',short:'Alaska Air',bg:'#E6F1FB',color:'#0C447C',activeBg:'#00467F',letter:'AS',checkUrl:'https://www.alaskaair.com/content/gifts',hasType:true,pinLabel:'Access code / PIN'}
+];
+
+// ─── State ────────────────────────────────────────────────
+let activeBrand='nordstrom';
+let data={nordstrom:[],target:[],alaska:[]};
+let unsaved=false;
+let editingId=null;
+let accessToken=null;
+let driveFileId=null;
+let clientId=localStorage.getItem('gc_client_id')||'';
+
+// ─── Client ID setup ──────────────────────────────────────
+function saveClientId(){
+  const val=document.getElementById('clientIdInput').value.trim();
+  if(!val){alert('Please paste your Client ID.');return;}
+  clientId=val;
+  localStorage.setItem('gc_client_id',val);
+  updateKeyStatus();
+  initGoogleAuth();
+}
+
+function updateKeyStatus(){
+  const el=document.getElementById('keyStatus');
+  const banner=document.getElementById('setupBanner');
+  if(clientId){
+    el.textContent='Saved ✓';el.className='key-status key-ok';
+    document.getElementById('clientIdInput').value=clientId;
+    banner.style.display='none';
+  } else {
+    el.textContent='Not set';el.className='key-status key-missing';
+    banner.style.display='block';
+  }
+}
+
+// ─── Google Auth ──────────────────────────────────────────
+let tokenClient=null;
+
+function initGoogleAuth(){
+  if(!clientId||!window.google)return;
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:clientId,
+    scope:DRIVE_SCOPE,
+    callback:(resp)=>{
+      if(resp.error){setDriveStatus('Sign-in failed: '+resp.error,false);return;}
+      accessToken=resp.access_token;
+      setDriveStatus('Signed in to Google Drive',true);
+    }
+  });
+}
+
+window.addEventListener('load',()=>{
+  updateKeyStatus();
+  // Wait for GSI to load
+  const wait=setInterval(()=>{
+    if(window.google){clearInterval(wait);if(clientId)initGoogleAuth();}
+  },200);
+});
+
+function signIn(){
+  if(!clientId){alert('Please save your Google Client ID first (see setup above).');return;}
+  if(!tokenClient){initGoogleAuth();}
+  if(!tokenClient){alert('Google sign-in not ready yet, please wait a moment.');return;}
+  tokenClient.requestAccessToken();
+}
+
+function signOut(){
+  if(accessToken){google.accounts.oauth2.revoke(accessToken,()=>{});}
+  accessToken=null;driveFileId=null;
+  setDriveStatus('Signed out',false);
+}
+
+function setDriveStatus(msg,signedIn){
+  document.getElementById('driveStatus').textContent=msg;
+  document.getElementById('btnSignIn').style.display=signedIn?'none':'flex';
+  document.getElementById('btnSignOut').style.display=signedIn?'flex':'none';
+  document.getElementById('btnLoad').style.display=signedIn?'flex':'none';
+  document.getElementById('btnSaveDrive').style.display=signedIn?'flex':'none';
+  if(signedIn){
+    document.getElementById('btnLoad').disabled=false;
+    document.getElementById('btnSaveDrive').disabled=false;
+  }
+}
+
+// ─── Drive API helpers ────────────────────────────────────
+async function findFile(){
+  const resp=await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=name%3D'${DRIVE_FILENAME}'+and+trashed%3Dfalse&spaces=drive&fields=files(id,name,modifiedTime)`,
+    {headers:{Authorization:'Bearer '+accessToken}}
+  );
+  const json=await resp.json();
+  return json.files&&json.files.length?json.files[0]:null;
+}
+
+async function loadFromDrive(){
+  if(!accessToken){alert('Please sign in first.');return;}
+  setBtn('btnLoad','⏳ Loading…',true);
+  try{
+    const file=await findFile();
+    if(!file){
+      setBtn('btnLoad','⬇ Load from Drive',false);
+      document.getElementById('driveFile').textContent='No giftcards.json found in Drive yet — save first to create it.';
+      return;
+    }
+    driveFileId=file.id;
+    const resp=await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+      {headers:{Authorization:'Bearer '+accessToken}});
+    const parsed=await resp.json();
+    if(parsed.version===2&&parsed.data){
+      data=parsed.data;
+      BRANDS.forEach(b=>{if(!data[b.id])data[b.id]=[];});
+    } else if(Array.isArray(parsed)){data[activeBrand]=parsed;}
+    markSaved();renderTabs();render();
+    const total=BRANDS.reduce((s,b)=>s+(data[b.id]||[]).length,0);
+    document.getElementById('driveFile').textContent='Loaded: '+DRIVE_FILENAME+' ('+total+' cards) · '+new Date(file.modifiedTime).toLocaleString();
+  }catch(e){alert('Failed to load from Drive: '+e.message);}
+  setBtn('btnLoad','⬇ Load from Drive',false);
+}
+
+async function saveToDrive(){
+  if(!accessToken){alert('Please sign in first.');return;}
+  setBtn('btnSaveDrive','⏳ Saving…',true);
+  const body=JSON.stringify({exported:new Date().toISOString(),version:2,data},null,2);
+  const blob=new Blob([body],{type:'application/json'});
+  try{
+    if(!driveFileId){
+      // Search for existing file first
+      const existing=await findFile();
+      driveFileId=existing?existing.id:null;
+    }
+    let resp;
+    if(driveFileId){
+      // Update existing file — no new file created
+      resp=await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`,{
+        method:'PATCH',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:blob
+      });
+    } else {
+      // Create new file (only first time)
+      const meta=new Blob([JSON.stringify({name:DRIVE_FILENAME,mimeType:'application/json'})],{type:'application/json'});
+      const form=new FormData();
+      form.append('metadata',meta);form.append('file',blob);
+      resp=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{
+        method:'POST',headers:{Authorization:'Bearer '+accessToken},body:form
+      });
+      const created=await resp.clone().json();
+      driveFileId=created.id;
+    }
+    if(resp.ok){
+      markSaved();
+      const total=BRANDS.reduce((s,b)=>s+(data[b.id]||[]).length,0);
+      document.getElementById('driveFile').textContent='Saved to Drive: '+DRIVE_FILENAME+' ('+total+' cards) · '+new Date().toLocaleString();
+    } else {
+      const err=await resp.json();
+      alert('Save failed: '+(err.error&&err.error.message)||resp.status);
+    }
+  }catch(e){alert('Failed to save to Drive: '+e.message);}
+  setBtn('btnSaveDrive','⬆ Save to Drive',false);
+}
+
+function setBtn(id,label,disabled){
+  const b=document.getElementById(id);
+  b.textContent=label;b.disabled=disabled;
+}
+
+// ─── Local backup ─────────────────────────────────────────
+function exportJSON(){
+  const out={exported:new Date().toISOString(),version:2,data};
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=DRIVE_FILENAME;a.click();URL.revokeObjectURL(a.href);
+  markSaved();
+}
+
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const parsed=JSON.parse(ev.target.result);
+      if(parsed.version===2&&parsed.data){data=parsed.data;BRANDS.forEach(b=>{if(!data[b.id])data[b.id]=[];});}
+      else if(parsed.cards&&Array.isArray(parsed.cards)){data[activeBrand]=parsed.cards;}
+      else if(Array.isArray(parsed)){data[activeBrand]=parsed;}
+      else{alert('Unrecognized format.');return;}
+      markSaved();renderTabs();render();
+      const total=BRANDS.reduce((s,b)=>s+(data[b.id]||[]).length,0);
+      alert('Loaded — '+total+' card(s) total.');
+    }catch(err){alert('Could not read file.');}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+
+// ─── App state helpers ────────────────────────────────────
+const getBrand=id=>BRANDS.find(b=>b.id===id)||BRANDS[0];
+const activeCards=()=>data[activeBrand]||[];
+function markUnsaved(){unsaved=true;document.getElementById('unsavedBadge').style.display='flex';}
+function markSaved(){unsaved=false;document.getElementById('unsavedBadge').style.display='none';}
+
+function switchBrand(id){activeBrand=id;closeForm();applyBrandToForm();renderTabs();render();}
+
+function applyBrandToForm(){
+  const b=getBrand(activeBrand);
+  document.getElementById('addBtn').style.background=b.activeBg;
+  document.getElementById('formSaveBtn').style.background=b.activeBg;
+  document.getElementById('f-type-wrap').style.display=b.hasType?'block':'none';
+  document.getElementById('formRow1').style.gridTemplateColumns=b.hasType?'1fr 1fr 1fr':'1fr 1fr';
+  document.getElementById('f-pin-label').textContent=b.pinLabel;
+  document.getElementById('checkLink').href=b.checkUrl;
+  document.getElementById('checkLink').textContent='Check balance at '+b.name+' \u2197';
+}
+
+function openForm(editId){
+  editingId=editId||null;const b=getBrand(activeBrand);hideErr();
+  if(editId){
+    const c=activeCards().find(c=>c.id===editId);if(!c)return;
+    document.getElementById('formTitle').textContent='Edit '+b.name+' card';
+    document.getElementById('formSaveBtn').textContent='Save changes';
+    document.getElementById('f-num').value=c.num||'';
+    document.getElementById('f-pin').value=c.pin||'';
+    document.getElementById('f-cur').value=c.cur||'USD';
+    document.getElementById('f-bal').value=c.bal!==null?c.bal:'';
+    document.getElementById('f-date').value=c.date||'';
+    document.getElementById('f-src').value=c.src||'';
+    document.getElementById('f-email').value=c.email||'';
+    document.getElementById('f-exp').value=c.exp||'';
+    document.getElementById('f-notes').value=c.notes||'';
+    if(b.hasType)document.getElementById('f-type').value=c.type||'gift card';
+  } else {
+    document.getElementById('formTitle').textContent='Add '+b.name+' card';
+    document.getElementById('formSaveBtn').textContent='Add card';
+    ['f-num','f-pin','f-bal','f-date','f-email','f-exp','f-notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-src').selectedIndex=0;document.getElementById('f-cur').selectedIndex=0;
+    if(b.hasType)document.getElementById('f-type').selectedIndex=0;
+  }
+  document.getElementById('addForm').style.display='block';
+  document.getElementById('f-num').focus();
+}
+
+function closeForm(){document.getElementById('addForm').style.display='none';editingId=null;hideErr();}
+function showErr(msg){const el=document.getElementById('errMsg');el.textContent=msg;el.style.display='block';}
+function hideErr(){document.getElementById('errMsg').style.display='none';}
+
+function saveCard(){
+  const num=document.getElementById('f-num').value.trim();
+  if(!num){showErr('Card number is required.');return;}
+  const cards=data[activeBrand]||[];
+  const isDup=cards.some(c=>c.num.replace(/\s/g,'')===num.replace(/\s/g,'')&&c.id!==editingId);
+  if(isDup){showErr('This card number already exists for '+getBrand(activeBrand).name+'.');return;}
+  const bal=parseFloat(document.getElementById('f-bal').value);
+  const b=getBrand(activeBrand);
+  const payload={num,type:b.hasType?document.getElementById('f-type').value:'gift card',
+    pin:document.getElementById('f-pin').value.trim(),cur:document.getElementById('f-cur').value,
+    bal:isNaN(bal)?null:bal,src:document.getElementById('f-src').value,
+    email:document.getElementById('f-email').value.trim(),date:document.getElementById('f-date').value,
+    exp:document.getElementById('f-exp').value.trim(),notes:document.getElementById('f-notes').value.trim()};
+  if(editingId){
+    const idx=cards.findIndex(c=>c.id===editingId);
+    if(idx>-1)data[activeBrand][idx]={...cards[idx],...payload};
+  } else {
+    if(!data[activeBrand])data[activeBrand]=[];
+    data[activeBrand].unshift({id:Date.now(),added:new Date().toLocaleDateString(),...payload});
+  }
+  closeForm();markUnsaved();renderTabs();render();
+}
+
+function deleteCard(id){
+  if(!confirm('Remove this card?'))return;
+  data[activeBrand]=(data[activeBrand]||[]).filter(c=>c.id!==id);
+  markUnsaved();renderTabs();render();
+}
+
+function updateBal(id,val){
+  const c=(data[activeBrand]||[]).find(c=>c.id===id);if(!c)return;
+  const n=parseFloat(val);c.bal=(isNaN(n)||val==='')?null:n;
+  markUnsaved();renderTabs();render();
+}
+
+// ─── Copy ─────────────────────────────────────────────────
+function copyText(text,btnId){
+  const t=document.createElement('textarea');
+  t.value=text;t.style.position='fixed';t.style.top='-9999px';t.style.left='-9999px';
+  document.body.appendChild(t);t.focus();t.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(t);
+  const btn=document.getElementById(btnId);
+  if(btn){const orig=btn.textContent;btn.textContent='Copied!';btn.classList.add('copied');setTimeout(()=>{btn.textContent=orig;btn.classList.remove('copied');},1600);}
+}
+document.addEventListener('click',function(e){
+  const btn=e.target.closest('.copy-btn,.ic-copy');
+  if(btn&&btn.dataset.copy!==undefined){copyText(btn.dataset.copy,btn.id);}
+});
+
+// ─── Render helpers ───────────────────────────────────────
+const srcLabel=src=>({physical:'In-store',online:'Online',gift:'Received as gift',other:'Other'}[src]||src||'');
+const srcBadgeClass=src=>src==='physical'?'badge-store':src==='gift'?'badge-gift':'badge-online';
+
+function sortedCards(cards){
+  return [...cards].sort((a,b)=>{
+    const ba=a.bal!==null?a.bal:-1,bb=b.bal!==null?b.bal:-1;
+    if(bb!==ba)return bb-ba;
+    return (b.id||0)-(a.id||0);
+  });
+}
+
+function renderTabs(){
+  document.getElementById('brandTabs').innerHTML=BRANDS.map(b=>{
+    const cards=data[b.id]||[];
+    const bal=cards.filter(c=>c.bal!==null).reduce((s,c)=>s+c.bal,0);
+    const isActive=b.id===activeBrand;
+    return `<div class="brand-tab${isActive?' active':''}" onclick="switchBrand('${b.id}')">
+      <div class="tab-logo" style="background:${isActive?'rgba(255,255,255,0.12)':b.bg};color:${isActive?'#fff':b.color}">${b.letter}</div>
+      <div class="tab-name">${b.short}</div>
+      <div class="tab-count">${cards.length} card${cards.length!==1?'s':''}</div>
+      <div class="tab-bal">${cards.filter(c=>c.bal!==null).length?'$'+bal.toFixed(2):'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateStats(){
+  const cards=activeCards();
+  const bal=cards.filter(c=>c.bal!==null).reduce((s,c)=>s+c.bal,0);
+  const physical=cards.filter(c=>c.src==='physical').length;
+  const online=cards.filter(c=>c.src==='online').length;
+  const gift=cards.filter(c=>c.src==='gift').length;
+  const other=cards.filter(c=>c.src==='other').length;
+  const unset=cards.filter(c=>!c.src).length;
+  document.getElementById('sTotal').textContent=cards.length;
+  document.getElementById('sBal').textContent='$'+bal.toFixed(2);
+  document.getElementById('sStore').textContent=physical;
+  const bd=[];
+  if(online)bd.push(online+' online');if(gift)bd.push(gift+' gift');
+  if(other)bd.push(other+' other');if(unset)bd.push(unset+' unset');
+  document.getElementById('sOnline').textContent=bd.length?bd.join(' · '):'—';
+  document.getElementById('cardCount').innerHTML=cards.length+(cards.length===1?' card':' cards')+'<span class="sort-hint">sorted by balance, then newest first</span>';
+}
+
+function render(){
+  updateStats();
+  const b=getBrand(activeBrand);
+  const cards=sortedCards(activeCards());
+  const list=document.getElementById('cardList');
+  if(!cards.length){list.innerHTML=`<div class="empty">No ${b.name} cards yet — click "+ Add card" to get started.</div>`;return;}
+  list.innerHTML=cards.map(c=>{
+    const masked=c.num.length>8?c.num.slice(0,-4).replace(/\S/g,'·')+c.num.slice(-4):c.num;
+    const balDisplay=c.bal!==null
+      ?`<div class="bal">${c.cur||'USD'} ${parseFloat(c.bal).toFixed(2)}</div>`
+      :`<div class="bal unknown">Balance unknown</div>`;
+    const isCert=c.type==='gift certificate';const srcL=srcLabel(c.src);
+    const fields=[
+      {lbl:'Card no.',val:c.num,display:masked},
+      c.pin?{lbl:'PIN',val:c.pin,display:c.pin}:null,
+      c.email?{lbl:'Email',val:c.email,display:c.email}:null,
+      c.date?{lbl:'Purchased',val:c.date,display:c.date}:null,
+      c.exp?{lbl:'Expires',val:c.exp,display:c.exp}:null,
+    ].filter(Boolean);
+    const fieldsHtml=fields.map((f,i)=>{
+      const btnId=`cp-${c.id}-${i}`;
+      return `<div class="field-row">
+        <span class="field-lbl">${f.lbl}</span>
+        <span class="field-val" title="${f.val}">${f.display}</span>
+        <button class="copy-btn" id="${btnId}" data-copy="${f.val.replace(/"/g,'&quot;')}">Copy</button>
+      </div>`;
+    }).join('');
+    return `<div class="gc">
+      <div class="gc-top">
+        <div class="brand-icon" style="background:${b.bg};color:${b.color}">${b.letter}</div>
+        <div class="gc-main">
+          <div class="gc-name">${b.name} ${c.type||'gift card'}</div>
+          <div class="gc-sub">Added ${c.added||''}${c.exp?' &middot; Exp: '+c.exp:''}</div>
+          <div class="gc-badges">
+            ${isCert?'<span class="badge badge-cert">Certificate</span>':''}
+            ${srcL?`<span class="badge ${srcBadgeClass(c.src)}">${srcL}</span>`:''}
+            ${c.email?`<span class="badge badge-email">${c.email}</span>`:''}
+            ${c.date?`<span class="badge badge-date">${c.date}</span>`:''}
+          </div>
+        </div>
+        <div class="gc-right">
+          ${balDisplay}
+          <input class="update-bal" type="number" placeholder="Update bal" step="0.01" min="0"
+            value="${c.bal!==null?c.bal:''}" onchange="updateBal(${c.id},this.value)" title="Enter new balance and press Tab or Enter"/>
+          <div class="gc-actions">
+            <button class="ic-btn ic-copy" id="cpn-${c.id}" data-copy="${c.num.replace(/"/g,'&quot;')}" title="Copy card number">&#10697;</button>
+            <button class="ic-btn edit" onclick="openForm(${c.id})" title="Edit">&#9998;</button>
+            <button class="ic-btn del" onclick="deleteCard(${c.id})" title="Delete">&#10005;</button>
+          </div>
+        </div>
+      </div>
+      ${fieldsHtml?`<div class="gc-fields">${fieldsHtml}</div>`:''}
+      ${c.notes?`<div class="gc-notes">${c.notes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+window.onbeforeunload=()=>unsaved?'You have unsaved changes!':undefined;
+applyBrandToForm();renderTabs();render();
+</script>
+</body>
+</html>
